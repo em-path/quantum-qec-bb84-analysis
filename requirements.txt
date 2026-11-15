@@ -1,0 +1,6 @@
+qutip>=5.0
+numpy>=1.24
+scipy>=1.11
+matplotlib>=3.8
+pandas>=2.0
+seaborn>=0.13
