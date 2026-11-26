@@ -1,7 +1,7 @@
 # Control Experiment: Quantum Error Correction vs. Classical Redundancy
 
 **Repository:** `em-path/quantum-qec-bb84-analysis`
-**Script:** `prueba_control.py`
+**Scripts:** `prueba_control.py`, `prueba_control_gemela.py`
 **Date:** 2026-11-26
 **Subject:** 3-qubit repetition code under a depolarizing channel
 
@@ -18,7 +18,10 @@ identical noise. For the 3-qubit repetition code, the two pipelines produce
 statistically indistinguishable QBER values, and the syndrome-based correction
 is never triggered. The result is a formal negative finding: the QBER reduction
 observed with this code is a redundancy effect, not evidence of a distinct
-quantum correction advantage.
+quantum correction advantage. A stricter paired (twin) experiment, in which both
+scenarios share the same seed, the same noisy state, and the same decoder random
+draws, confirms the result: the two scenarios are bit-for-bit identical and the
+correction is never triggered.
 
 ---
 
@@ -88,6 +91,8 @@ bit, while `Z` does not.
 
 The difference between A and B is `+0.0010`, with `z = 0.18`. Since
 `|z| < 2`, the difference is not statistically significant at the 95 % level.
+Section 3.4 repeats the comparison with a strict paired design and confirms the
+result.
 
 ### 3.2 Mechanism diagnostics (Scenario A)
 
@@ -108,6 +113,57 @@ The difference between A and B is `+0.0010`, with `z = 0.18`. Since
 Both observations are consistent with theory within one standard error. The
 drop from roughly `0.10` to roughly `0.03` is fully accounted for by the
 majority vote over three redundant qubits.
+
+### 3.4 Strict paired (twin) control experiment
+
+The comparison in Section 3.1 used independent seeds for A and B (2026 and 2027).
+To rule out the possibility that the similarity of the two QBER values was masked
+by different random streams, a stricter paired experiment was run with
+`prueba_control_gemela.py`. In this design, both scenarios share, iteration by
+iteration:
+
+1. the same logical bit,
+2. the same encoded state,
+3. the same noisy state `rho_err` (the channel is deterministic), and
+4. the same decoder random draws.
+
+Point 4 is enforced by saving the NumPy RNG state before decoding A and restoring
+it before decoding B, so both decoders receive identical uniform random numbers.
+Any difference between the two scenarios can therefore come only from the state
+passed to `decode()`, that is, from the correction itself. The paired analysis
+uses the discordant pairs `b` (A correct, B wrong) and `c` (A wrong, B correct),
+which is the appropriate test for paired binary outcomes.
+
+Parameters: `n = 3`, `p = 0.15`, `N = 2000`, shared seed `2026`.
+
+| Scenario | QBER | SE | Errors / iterations |
+|---|---:|---:|---:|
+| **A) With QEC** (syndrome + correction) | **0.0315** | 0.0039 | 63 / 2000 |
+| **B) Without QEC** (redundancy only) | **0.0315** | 0.0039 | 63 / 2000 |
+| **Difference A − B** | **+0.0000** | 0.0000 | — |
+
+Discordant pairs: `b = 0`, `c = 0`, McNemar-style `z = 0.00`. The decoded bits
+of A and B differ in `0 / 2000` iterations: the two scenarios are bit-for-bit
+identical.
+
+Per-iteration correction diagnostics:
+
+| Quantity | Count |
+|---|---:|
+| Non-trivial syndromes (error detected) | 0 / 2000 |
+| Corrections that changed the state | 0 / 2000 |
+| **Correction triggered** (both conditions) | **0 / 2000** |
+| Syndrome non-trivial but state unchanged | 0 / 2000 |
+| State changed without a non-trivial syndrome | 0 / 2000 |
+
+The exact equality is the expected outcome when the correction is a no-op: both
+scenarios receive the same state and the same random draws, so their decoded bits
+coincide by construction. The paired experiment confirms that the similarity in
+Section 3.1 is not a statistical artifact and that the syndrome-based correction
+is never executed. As explained in Section 5, this is a deterministic
+consequence of the expectation-value syndrome, not an effect of the seed. The
+physical conclusion of Section 4 therefore holds: for this code, single-error
+syndrome correction and majority voting are operationally equivalent.
 
 ---
 
@@ -188,14 +244,15 @@ Run from the repository root:
 
 ```bash
 python prueba_control.py 2000 0.15 3 2026
+python prueba_control_gemela.py 2000 0.15 3 2026
 ```
 
 The arguments are, in order: iterations, noise level `p`, code size `n`, and
-base seed. The script prints the comparative table, the mechanism diagnostics,
-and the theoretical reference values. It does not write or modify any file.
+seed. The first script prints the independent-seed comparison; the second prints
+the strict paired (twin) comparison. Neither writes or modifies any file.
 
-`prueba_control.py` includes a compatibility import shim so that the same file
-runs against both module naming conventions:
+Both scripts include a compatibility import shim so that the same files run
+against both module naming conventions:
 
 - Spanish working tree: `src/qec.py` (`codificar`, `medir_sindrome`, `corregir`,
   `decodificar`), `src/simulacion.py`, `src/canal.py`.
@@ -218,6 +275,10 @@ The underlying physics is identical in both trees; only the identifiers differ.
 - **Use the result as a control, not as a failure.** The negative result
   strengthens the rigor of the study: it identifies precisely which part of the
   pipeline produces the improvement and prevents an overstatement in the thesis.
+- **The paired design rules out a seed artifact.** With a shared seed, shared
+  noisy states, and shared decoder random draws, A and B are bit-for-bit
+  identical. The absence of a correction effect is therefore a property of the
+  code and of the simulator, not of the random sampling.
 - **Limitations.** The experiment uses a single code size (`n = 3`), a single
   noise level (`p = 0.15`), and a bit-flip-only repetition code. The conclusion
   is specific to this code and channel. It does not rule out a genuine QEC
@@ -229,8 +290,8 @@ The underlying physics is identical in both trees; only the identifiers differ.
 
 | Question | Answer |
 |---|---|
-| Does QEC reduce the QBER more than redundancy alone? | No. A and B are statistically identical. |
-| Did the syndrome/correction step act at all? | No. 0 of 2000 corrections. |
+| Does QEC reduce the QBER more than redundancy alone? | No. A and B are statistically identical (Section 3.1) and bit-for-bit identical in the paired experiment (Section 3.4). |
+| Did the syndrome/correction step act at all? | No. 0 of 2000 corrections, including 0 triggered corrections in the paired experiment. |
 | Where does the reduction come from? | Structured redundancy (`n = 3`) plus majority voting. |
 | Is the current syndrome measurement projective? | No. It is an expectation-value proxy. |
 | Does that invalidate the equivalence conclusion? | No. Syndrome correction and majority voting are equivalent for this code. |
