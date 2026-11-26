@@ -1,86 +1,88 @@
 """
-prueba_control.py - Experimento de control: QEC vs. redundancia clasica
-=======================================================================
+prueba_control.py - Control experiment: QEC vs. classical redundancy
+=====================================================================
 
-Pregunta experimental
+Experimental question
 ---------------------
-La reduccion del QBER que se observa en el pipeline con QEC, ¿se debe a la
-MEDICION DE SINDROME + CORRECCION cuantica, o basta con la REDUNDANCIA
-(repetir el qubit n veces) y la VOTACION POR MAYORIA en la decodificacion?
+The QBER reduction observed in the QEC pipeline: is it caused by the
+SYNDROME MEASUREMENT + quantum CORRECTION, or is plain REDUNDANCY
+(repeating the qubit n times) plus MAJORITY VOTING in the decoder enough?
 
-Diseno
+Design
 ------
-Se transmiten los mismos N bits logicos por el mismo canal depolarizante
-(probabilidad p por qubit fisico) en dos escenarios que solo difieren en
-un paso:
+The same N logical bits are transmitted through the same depolarizing
+channel (probability p per physical qubit) in two scenarios that differ
+in a single step:
 
-    A) Con QEC ............ codificar -> ruido -> medir_sindrome ->
-                            corregir -> decodificar (mayoria)
-    B) Solo redundancia ... codificar -> ruido -> decodificar (mayoria)
+    A) With QEC ....... encode -> noise -> measure_syndrome ->
+                        correct -> decode (majority)
+    B) Redundancy only  encode -> noise -> decode (majority)
 
-El escenario B omite deliberadamente medir_sindrome() y corregir(). Si el
-QBER de A es significativamente menor que el de B, la correccion por
-sindrome aporta algo. Si A ~ B, la reduccion se explica por la redundancia
-y la votacion por mayoria.
+Scenario B deliberately omits measure_syndrome() and correct(). If the
+QBER of A is significantly lower than that of B, the syndrome correction
+contributes something. If A ~ B, the reduction is explained by redundancy
+and majority voting.
 
-Como referencia se incluye un tercer escenario sin redundancia (n = 1), que
-permite separar el efecto de "repetir el qubit" del de "corregir el qubit".
+A third scenario without redundancy (n = 1) is included as a reference,
+which separates the effect of "repeating the qubit" from that of
+"correcting the qubit".
 
-Uso
----
-    python prueba_control.py                    # n=3, p=0.15, 2000 iteraciones
-    python prueba_control.py 5000 0.15 3 2026   # iteraciones, p, n, semilla
+Usage
+-----
+    python prueba_control.py                    # n=3, p=0.15, 2000 iterations
+    python prueba_control.py 5000 0.15 3 2026   # iterations, p, n, seed
 
-El script NO escribe ni modifica archivos: solo imprime en pantalla.
+The script does NOT write or modify files: it only prints to the screen.
 """
 
 from __future__ import annotations
 
+import math
 import sys
 
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Imports: compatible with the Spanish working tree (src/qec.py with
-# `codificar`, src/simulacion.py, src/canal.py) and with the English
-# reproducible package in the remote repository (src/qec.py with `encode`,
-# src/simulation.py, src/channel.py). The underlying physics is identical.
+# Imports: compatible with the English reproducible package in the remote
+# repository (src/qec.py with `encode`, src/simulation.py, src/channel.py)
+# and with the Spanish working tree (src/qec.py with `codificar`,
+# src/simulacion.py, src/canal.py). The underlying physics is identical.
 # ---------------------------------------------------------------------------
 try:
-    from src.qec import codificar, medir_sindrome, corregir, decodificar
-    from src.simulacion import canal_depolarizante_n
-    from src.canal import canal_depolarizante
-    from src.bb84 import preparar_qubit, medir_qubit
-except ImportError:  # English module/function names (remote package)
+    from src.qec import encode, measure_syndrome, correct, decode
+    from src.simulation import depolarizing_channel_n
+    from src.channel import depolarizing_channel
+    from src.bb84 import prepare_qubit, measure_qubit
+except ImportError:  # Spanish module/function names (local working tree)
     from src.qec import (
-        encode as codificar,
-        measure_syndrome as medir_sindrome,
-        correct as corregir,
-        decode as decodificar,
+        codificar as encode,
+        medir_sindrome as measure_syndrome,
+        corregir as correct,
+        decodificar as decode,
     )
-    from src.channel import depolarizing_channel_n as canal_depolarizante_n
-    from src.channel import depolarizing_channel as canal_depolarizante
-    from src.bb84 import prepare_qubit as preparar_qubit
-    from src.bb84 import measure_qubit as medir_qubit
+    from src.simulacion import canal_depolarizante_n as depolarizing_channel_n
+    from src.canal import canal_depolarizante as depolarizing_channel
+    from src.bb84 import preparar_qubit as prepare_qubit
+    from src.bb84 import medir_qubit as measure_qubit
 
 
 # ===========================================================================
-# Parametros por defecto
+# Default parameters
 # ===========================================================================
 
-N_QUBITS = 3        # tamano del codigo de repeticion (n)
-P_RUIDO = 0.15      # probabilidad de error por qubit fisico (p)
-N_ITER = 2000       # iteraciones (bits logicos) por escenario
-SEED = 2026         # semilla base
+N_QUBITS = 3        # repetition-code size (n)
+NOISE_P = 0.15      # error probability per physical qubit (p)
+N_ITER = 2000       # iterations (logical bits) per scenario
+SEED = 2026         # base seed
 
 
 # ===========================================================================
-# Utilidades
+# Utilities
 # ===========================================================================
 
-def _qber_con_error_estandar(errores: int, total: int) -> tuple[float, float]:
-    """Devuelve (QBER, error estandar binomial)."""
-    qber = errores / total
+def _qber_with_standard_error(errors: int, total: int) -> tuple[float, float]:
+    """Return (QBER, binomial standard error)."""
+    qber = errors / total
     if 0.0 < qber < 1.0:
         se = float(np.sqrt(qber * (1.0 - qber) / total))
     else:
@@ -89,257 +91,262 @@ def _qber_con_error_estandar(errores: int, total: int) -> tuple[float, float]:
 
 
 # ===========================================================================
-# Escenario A: pipeline con QEC (sindrome + correccion)
+# Scenario A: QEC pipeline (syndrome + correction)
 # ===========================================================================
 
-def escenario_con_qec(n_iter: int, n: int, p: float, seed: int) -> dict:
+def scenario_with_qec(n_iter: int, n: int, p: float, seed: int) -> dict:
     """
-    Escenario A: codificar -> canal -> medir_sindrome -> corregir -> decodificar.
+    Scenario A: encode -> channel -> measure_syndrome -> correct -> decode.
 
-    No modifica la logica del proyecto: usa las funciones originales de
-    src.qec y src.simulacion tal como estan implementadas.
+    The original project logic is not modified: the functions from
+    src.qec and src.simulation are used exactly as implemented.
     """
     np.random.seed(seed)
 
-    errores = 0
-    sindromes_no_triviales = 0
-    correcciones_efectivas = 0
+    errors = 0
+    non_trivial_syndromes = 0
+    effective_corrections = 0
 
     for _ in range(n_iter):
         bit = int(np.random.randint(0, 2))
 
-        # 1) Codificacion: |b> -> |bbb>
-        rho = codificar(bit, n)
+        # 1) Encoding: |b> -> |bbb>
+        rho = encode(bit, n)
 
-        # 2) Canal ruidoso, independiente por qubit fisico
-        rho_err = canal_depolarizante_n(rho, p, n)
+        # 2) Noisy channel, independent per physical qubit
+        rho_err = depolarizing_channel_n(rho, p, n)
 
-        # 3) Medicion de sindrome
-        sindrome = medir_sindrome(rho_err, n)
-        if any(s != 0 for s in sindrome):
-            sindromes_no_triviales += 1
+        # 3) Syndrome measurement
+        syndrome = measure_syndrome(rho_err, n)
+        if any(s != 0 for s in syndrome):
+            non_trivial_syndromes += 1
 
-        # 4) Correccion
-        rho_dec = corregir(rho_err, sindrome, n)
+        # 4) Correction
+        rho_dec = correct(rho_err, syndrome, n)
         if not np.allclose(rho_dec.full(), rho_err.full(), atol=1e-12):
-            correcciones_efectivas += 1
+            effective_corrections += 1
 
-        # 5) Decodificacion por votacion mayoritaria
-        bit_bob = decodificar(rho_dec, n)
+        # 5) Majority-vote decoding
+        bob_bit = decode(rho_dec, n)
 
-        if bit_bob != bit:
-            errores += 1
+        if bob_bit != bit:
+            errors += 1
 
-    qber, se = _qber_con_error_estandar(errores, n_iter)
+    qber, se = _qber_with_standard_error(errors, n_iter)
     return {
         "qber": qber,
         "se": se,
-        "errores": errores,
+        "errors": errors,
         "n_iter": n_iter,
-        "sindromes_no_triviales": sindromes_no_triviales,
-        "correcciones_efectivas": correcciones_efectivas,
+        "non_trivial_syndromes": non_trivial_syndromes,
+        "effective_corrections": effective_corrections,
     }
 
 
 # ===========================================================================
-# Escenario B: solo redundancia (sin medir_sindrome ni corregir)
+# Scenario B: redundancy only (no measure_syndrome, no correct)
 # ===========================================================================
 
-def escenario_solo_redundancia(n_iter: int, n: int, p: float, seed: int) -> dict:
+def scenario_redundancy_only(n_iter: int, n: int, p: float, seed: int) -> dict:
     """
-    Escenario B: codificar -> canal -> decodificar.
+    Scenario B: encode -> channel -> decode.
 
-    Se omite por completo la QEC: el estado ruidoso se pasa directamente a
-    decodificar(), que hace votacion por mayoria. Esto simula "solo
-    redundancia clasica".
+    QEC is omitted entirely: the noisy state goes directly to decode(),
+    which performs majority voting. This simulates "classical redundancy
+    only".
     """
     np.random.seed(seed)
 
-    errores = 0
+    errors = 0
 
     for _ in range(n_iter):
         bit = int(np.random.randint(0, 2))
 
-        rho = codificar(bit, n)
-        rho_err = canal_depolarizante_n(rho, p, n)
+        rho = encode(bit, n)
+        rho_err = depolarizing_channel_n(rho, p, n)
 
-        # Sin sindrome y sin correccion: el estado ruidoso va directo.
-        bit_bob = decodificar(rho_err, n)
+        # No syndrome and no correction: the noisy state goes straight through.
+        bob_bit = decode(rho_err, n)
 
-        if bit_bob != bit:
-            errores += 1
+        if bob_bit != bit:
+            errors += 1
 
-    qber, se = _qber_con_error_estandar(errores, n_iter)
+    qber, se = _qber_with_standard_error(errors, n_iter)
     return {
         "qber": qber,
         "se": se,
-        "errores": errores,
+        "errors": errors,
         "n_iter": n_iter,
     }
 
 
 # ===========================================================================
-# Escenario de referencia: sin redundancia (n = 1)
+# Reference scenario: no redundancy (n = 1)
 # ===========================================================================
 
-def escenario_sin_redundancia(n_iter: int, p: float, seed: int) -> dict:
+def scenario_without_redundancy(n_iter: int, p: float, seed: int) -> dict:
     """
-    Referencia: un solo qubit en la base Z, sin repeticion ni mayoria.
-    Sirve para medir cuanto QBER hay antes de cualquier redundancia.
+    Reference: a single qubit in the Z basis, with no repetition or
+    majority vote. It measures the QBER before any redundancy.
     """
     np.random.seed(seed)
 
-    errores = 0
+    errors = 0
 
     for _ in range(n_iter):
         bit = int(np.random.randint(0, 2))
 
-        rho = preparar_qubit(bit, 0)          # base Z
-        rho_err = canal_depolarizante(rho, p)
-        bit_bob = medir_qubit(rho_err, 0)     # base Z
+        rho = prepare_qubit(bit, 0)              # Z basis
+        rho_err = depolarizing_channel(rho, p)
+        bob_bit = measure_qubit(rho_err, 0)      # Z basis
 
-        if bit_bob != bit:
-            errores += 1
+        if bob_bit != bit:
+            errors += 1
 
-    qber, se = _qber_con_error_estandar(errores, n_iter)
+    qber, se = _qber_with_standard_error(errors, n_iter)
     return {
         "qber": qber,
         "se": se,
-        "errores": errores,
+        "errors": errors,
         "n_iter": n_iter,
     }
 
 
 # ===========================================================================
-# Presentacion de resultados
+# Results presentation
 # ===========================================================================
 
 def main() -> None:
-    # Forzar UTF-8 en la consola de Windows si es posible.
+    # Force UTF-8 on the Windows console when possible.
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
 
     n_iter = int(sys.argv[1]) if len(sys.argv) > 1 else N_ITER
-    p = float(sys.argv[2]) if len(sys.argv) > 2 else P_RUIDO
+    p = float(sys.argv[2]) if len(sys.argv) > 2 else NOISE_P
     n = int(sys.argv[3]) if len(sys.argv) > 3 else N_QUBITS
     seed = int(sys.argv[4]) if len(sys.argv) > 4 else SEED
 
     if n < 3 or n % 2 == 0:
-        raise SystemExit("ERROR: n debe ser impar y >= 3.")
+        raise SystemExit("ERROR: n must be odd and >= 3.")
     if not (0.0 <= p <= 1.0):
-        raise SystemExit("ERROR: p debe estar en [0, 1].")
+        raise SystemExit("ERROR: p must be in [0, 1].")
     if n_iter < 1:
-        raise SystemExit("ERROR: el numero de iteraciones debe ser >= 1.")
+        raise SystemExit("ERROR: the number of iterations must be >= 1.")
 
     print("=" * 80)
-    print(" EXPERIMENTO DE CONTROL - ¿QEC o solo redundancia clasica?")
+    print(" CONTROL EXPERIMENT - QEC or classical redundancy only?")
     print("=" * 80)
-    print(f" Tamano de codigo (n) ............ {n} qubits")
-    print(f" Ruido por qubit (p) ............. {p:.4f}")
-    print(f" Iteraciones por escenario ....... {n_iter}")
-    print(f" Canal .......................... depolarizante independiente por qubit")
-    print(f" Semillas (A, B, R) .............. {seed}, {seed + 1}, {seed + 2}")
+    print(f" Code size (n) .................... {n} qubits")
+    print(f" Noise per qubit (p) .............. {p:.4f}")
+    print(f" Iterations per scenario .......... {n_iter}")
+    print(f" Channel .......................... depolarizing, independent per qubit")
+    print(f" Seeds (A, B, R) .................. {seed}, {seed + 1}, {seed + 2}")
     print("-" * 80)
-    print(" A) Con QEC ........ codificar -> ruido -> sindrome -> corregir -> decodificar")
-    print(" B) Solo redundancia  codificar -> ruido -> (sin corregir)      -> decodificar")
-    print(" R) Referencia ...... 1 qubit, sin redundancia ni mayoria")
+    print(" A) With QEC ........ encode -> noise -> syndrome -> correct -> decode")
+    print(" B) Redundancy only . encode -> noise -> (no correction)       -> decode")
+    print(" R) Reference ....... 1 qubit, no redundancy and no majority vote")
     print("=" * 80)
 
-    res_a = escenario_con_qec(n_iter, n, p, seed)
-    res_b = escenario_solo_redundancia(n_iter, n, p, seed + 1)
-    res_r = escenario_sin_redundancia(n_iter, p, seed + 2)
+    res_a = scenario_with_qec(n_iter, n, p, seed)
+    res_b = scenario_redundancy_only(n_iter, n, p, seed + 1)
+    res_r = scenario_without_redundancy(n_iter, p, seed + 2)
 
-    dif = res_a["qber"] - res_b["qber"]
-    se_dif = float(np.hypot(res_a["se"], res_b["se"]))
-    z = dif / se_dif if se_dif > 0 else 0.0
+    difference = res_a["qber"] - res_b["qber"]
+    se_difference = float(np.hypot(res_a["se"], res_b["se"]))
+    z = difference / se_difference if se_difference > 0 else 0.0
 
     # ------------------------------------------------------------------
-    # Tabla 1: comparacion solicitada
+    # Table 1: requested comparison
     # ------------------------------------------------------------------
     print()
-    print("[1] TABLA COMPARATIVA DE QBER")
+    print("[1] QBER COMPARISON TABLE")
     print("-" * 80)
-    print(f" {'Escenario':<44} {'QBER':>8} {'EE':>8} {'Errores':>10}")
+    print(f" {'Scenario':<44} {'QBER':>8} {'SE':>8} {'Errors':>10}")
     print("-" * 80)
-    print(f" {'A) Con QEC (sindrome + correccion)':<44} "
+    print(f" {'A) With QEC (syndrome + correction)':<44} "
           f"{res_a['qber']:>8.4f} {res_a['se']:>8.4f} "
-          f"{res_a['errores']:>5}/{res_a['n_iter']:<4}")
-    print(f" {'B) Solo redundancia (sin corregir)':<44} "
+          f"{res_a['errors']:>5}/{res_a['n_iter']:<4}")
+    print(f" {'B) Redundancy only (no correction)':<44} "
           f"{res_b['qber']:>8.4f} {res_b['se']:>8.4f} "
-          f"{res_b['errores']:>5}/{res_b['n_iter']:<4}")
+          f"{res_b['errors']:>5}/{res_b['n_iter']:<4}")
     print("-" * 80)
-    print(f" {'Diferencia (A - B)':<44} {dif:>+8.4f} {se_dif:>8.4f}")
-    print(f" {'Estadistico z = (A-B)/EE':<44} {z:>+8.2f}")
+    print(f" {'Difference (A - B)':<44} "
+          f"{difference:>+8.4f} {se_difference:>8.4f}")
+    print(f" {'z statistic = (A - B) / SE':<44} {z:>+8.2f}")
     print("-" * 80)
 
     # ------------------------------------------------------------------
-    # Tabla 2: diagnostico del mecanismo
+    # Table 2: mechanism diagnostics
     # ------------------------------------------------------------------
     print()
-    print("[2] DIAGNOSTICO DEL MECANISMO (Escenario A)")
+    print("[2] MECHANISM DIAGNOSTICS (Scenario A)")
     print("-" * 80)
-    frac_sind = res_a["sindromes_no_triviales"] / n_iter
-    frac_corr = res_a["correcciones_efectivas"] / n_iter
-    print(f" Sindrome no trivial (se detecto error) ... "
-          f"{res_a['sindromes_no_triviales']:>5}/{n_iter}  ({frac_sind:6.2%})")
-    print(f" Correcciones efectivas aplicadas ......... "
-          f"{res_a['correcciones_efectivas']:>5}/{n_iter}  ({frac_corr:6.2%})")
-    print(" (Si ambos son 0, 'corregir' no modifico ningun estado: A y B")
-    print("  son el mismo canal a efectos del bit decodificado.)")
+    frac_syn = res_a["non_trivial_syndromes"] / n_iter
+    frac_corr = res_a["effective_corrections"] / n_iter
+    print(f" Non-trivial syndrome (error detected) ... "
+          f"{res_a['non_trivial_syndromes']:>5}/{n_iter}  ({frac_syn:6.2%})")
+    print(f" Effective corrections applied ........... "
+          f"{res_a['effective_corrections']:>5}/{n_iter}  ({frac_corr:6.2%})")
+    print(" (If both are 0, 'correct' did not modify any state: A and B")
+    print("  are the same channel as far as the decoded bit is concerned.)")
 
     # ------------------------------------------------------------------
-    # Tabla 3: referencia teorica y sin redundancia
+    # Table 3: no-redundancy reference and theoretical values
     # ------------------------------------------------------------------
     q = 2.0 * p / 3.0
-    qber_sin_red_teo = q
-    qber_mayoria_3 = 3.0 * q**2 * (1.0 - q) + q**3
+    qber_no_redundancy_theory = q
+    qber_majority_theory = sum(
+        math.comb(n, k) * q**k * (1.0 - q) ** (n - k)
+        for k in range(n // 2 + 1, n + 1)
+    )
 
     print()
-    print("[3] REFERENCIA: SIN REDUNDANCIA Y VALORES TEORICOS")
+    print("[3] REFERENCE: NO REDUNDANCY AND THEORETICAL VALUES")
     print("-" * 80)
-    print(f" q = 2p/3 (prob. efectiva de bit-flip por qubit) ... {q:.4f}")
-    print(f" {'Escenario':<44} {'QBER':>8} {'EE':>8} {'Errores':>10}")
+    print(f" q = 2p/3 (effective bit-flip probability per qubit) ... {q:.4f}")
+    print(f" {'Scenario':<44} {'QBER':>8} {'SE':>8} {'Errors':>10}")
     print("-" * 80)
-    print(f" {'R) Sin redundancia (n=1)':<44} "
+    print(f" {'R) No redundancy (n=1)':<44} "
           f"{res_r['qber']:>8.4f} {res_r['se']:>8.4f} "
-          f"{res_r['errores']:>5}/{res_r['n_iter']:<4}")
+          f"{res_r['errors']:>5}/{res_r['n_iter']:<4}")
     print("-" * 80)
-    print(f" QBER teorico sin redundancia (1 qubit) ........... {qber_sin_red_teo:.4f}")
-    print(f" QBER teorico mayoria de {n} (sin QEC) .............. "
-          f"{qber_mayoria_3:.4f}")
-    print(" (El segundo valor es 3q^2(1-q) + q^3: falla la mayoria solo si")
-    print("  se invierten 2 o 3 de los 3 qubits.)")
+    print(f" Theoretical QBER without redundancy (1 qubit) ..... "
+          f"{qber_no_redundancy_theory:.4f}")
+    print(f" Theoretical QBER, majority of {n} (no QEC) ......... "
+          f"{qber_majority_theory:.4f}")
+    print(" (The second value is the probability that more than n/2")
+    print(f"  of the {n} qubits flip.)")
 
     # ------------------------------------------------------------------
-    # Lectura automatica del resultado
+    # Automatic interpretation of the result
     # ------------------------------------------------------------------
     print()
-    print("[4] LECTURA DEL RESULTADO")
+    print("[4] INTERPRETATION OF THE RESULT")
     print("-" * 80)
     if abs(z) < 2.0:
-        print(f" * La diferencia A - B ({dif:+.4f}) NO es significativa "
+        print(f" * The A - B difference ({difference:+.4f}) is NOT significant "
               f"(|z| = {abs(z):.2f} < 2).")
     else:
-        print(f" * La diferencia A - B ({dif:+.4f}) es significativa "
+        print(f" * The A - B difference ({difference:+.4f}) is significant "
               f"(|z| = {abs(z):.2f} >= 2).")
 
-    if res_a["correcciones_efectivas"] == 0:
-        print(" * corregir() no actuo en ninguna iteracion: el sindrome medido")
-        print("   fue trivial y el estado llego intacto a la decodificacion.")
-        print(" * Entonces, en este experimento la reduccion del QBER NO proviene")
-        print("   de la correccion cuantica, sino de la redundancia (n qubits) y")
-        print("   de la votacion por mayoria en decodificar().")
+    if res_a["effective_corrections"] == 0:
+        print(" * correct() did not act in any iteration: the measured syndrome")
+        print("   was trivial and the state reached the decoder intact.")
+        print(" * Therefore, in this experiment the QBER reduction does NOT come")
+        print("   from quantum correction, but from redundancy (n qubits) and")
+        print("   from majority voting in decode().")
     else:
-        print(f" * corregir() actuo en {res_a['correcciones_efectivas']} iteraciones;")
-        print("   parte de la diferencia (si existe) puede atribuirse a la QEC.")
+        print(f" * correct() acted in {res_a['effective_corrections']} iterations;")
+        print("   part of the difference (if any) may be attributed to QEC.")
 
-    print(" * Nota teorica: para el codigo de repeticion de bit-flip, corregir")
-    print("   un error unico a partir del sindrome es operacionalmente")
-    print("   equivalente a la votacion por mayoria. La ventaja de la QEC")
-    print("   aparece con codigos que corrigen X y Z a la vez (p. ej. Shor o")
-    print("   superficie), no con el codigo de repeticion en la base Z.")
+    print(" * Theoretical note: for the bit-flip repetition code, correcting")
+    print("   a single error from the syndrome is operationally equivalent to")
+    print("   majority voting. A QEC advantage appears with codes that correct")
+    print("   both X and Z (e.g., Shor or surface codes), not with the")
+    print("   repetition code in the Z basis.")
     print("=" * 80)
 
 
