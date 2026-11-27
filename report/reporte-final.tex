@@ -1161,6 +1161,79 @@ escalonado dibuja una diagonal que responde la pregunta de investigación: el
 tamaño de código óptimo aumenta con el ruido, y lo hace por escalones, no de
 forma continua, porque solo se dispone de cuatro tamaños en el conjunto evaluado.
 
+\subsection{Experimento de control: redundancia clásica vs. corrección cuántica}
+\label{sec:control}
+
+Los resultados anteriores muestran que el QBER disminuye al emplear el código de
+repetición, pero no permiten atribuir esa disminución a un componente concreto
+del proceso. La cadena de QEC combina dos operaciones distintas: la redundancia
+de representar cada bit lógico con tres qubits físicos y la corrección activa que
+mide el síndrome y aplica una operación sobre el estado. Para separar ambos
+efectos se diseñó un experimento de control en el que se comparan dos escenarios
+que comparten todo, excepto la etapa de corrección.
+
+En el escenario A se ejecuta la cadena completa: codificación, canal
+depolarizante, medición del síndrome, corrección y decodificación. En el
+escenario B se conservan la codificación, el canal y la decodificación por
+mayoría, pero se omiten la medición del síndrome y la corrección. El experimento
+se realizó con \(n=3\), \(p=0.15\) y \(N=2000\) bits lógicos, y ambos escenarios
+compartieron la misma semilla (2026). Para eliminar cualquier diferencia ajena a
+la corrección, se reutilizaron el mismo bit lógico, el mismo estado codificado,
+el mismo estado ruidoso y las mismas extracciones aleatorias del decodificador:
+el estado del generador se guardó antes de decodificar A y se restauró antes de
+decodificar B. Así, toda discrepancia entre A y B solo podría provenir de la
+corrección.
+
+La Tabla~\ref{tab:control} presenta el resultado. Los dos escenarios produjeron un
+QBER idéntico de \(0.0315\), los mismos 63 errores sobre 2000 bits y cero pares
+discordantes. La inspección del mecanismo mostró además que el síndrome fue
+trivial en las 2000 iteraciones y que la corrección no modificó ningún estado.
+
+\begin{table}[htbp]
+\centering
+\caption{Experimento de control para \(n=3\), \(p=0.15\) y \(N=2000\) bits
+lógicos. Ambos escenarios comparten semilla, estados ruidosos y extracciones
+del decodificador.}
+\label{tab:control}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Escenario & QBER & Error estándar & Errores / \(N\) \\
+\midrule
+A) Con QEC (síndrome + corrección) & 0.0315 & 0.0039 & 63/2000 \\
+B) Sin QEC (solo redundancia) & 0.0315 & 0.0039 & 63/2000 \\
+Diferencia A \(-\) B & 0.0000 & 0.0000 & 0 \\
+\midrule
+Referencia sin redundancia (\(n=1\)) & 0.1055 & 0.0069 & 211/2000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El resultado tiene una explicación directa. En la base \(Z\), un único error de
+bit se corrige igual por síndrome que por votación: el qubit que discrepa queda
+en minoría frente a los otros dos y se sustituye por el valor mayoritario. Si dos
+o tres qubits se voltean, ambos procedimientos fallan. Por tanto, para este
+código y este canal, la predicción teórica es
+\begin{equation}
+\mathrm{QBER}_{A} = \mathrm{QBER}_{B} = 3q^{2}(1-q) + q^{3},
+\label{eq:control}
+\end{equation}
+donde \(q=2p/3\) es la probabilidad efectiva de que un qubit físico sufra un
+volteo de bit (Ecuación~\eqref{eq:qber}). Con \(p=0.15\), \(q=0.10\), la
+Ecuación~\eqref{eq:control} predice \(0.028\), valor compatible con el \(0.0315\)
+observado dentro del error de muestreo.
+
+La conclusión es que, para el código de repetición de tres qubits, la reducción
+del QBER proviene de la redundancia estructurada —tres copias y una decisión por
+mayoría— y no de la corrección por síndrome. La analogía de los guardias de la
+Sección~\ref{sec:tradeoff} ayuda a fijar la idea: lo que protege es el número de
+copias y la regla de decisión, no un procedimiento separado de reparación que
+aporte una protección adicional. Cabe precisar que la implementación actual del
+síndrome utiliza valores esperados de los estabilizadores; para el estado
+depolarizado y \(p<0.75\) ese indicador es trivialmente cero. Esta limitación de
+implementación no altera la equivalencia: aun con una medición proyectiva,
+corregir un solo bit volteado y votar por mayoría producen la misma decisión.
+
 \section{Discusión}
 
 Los resultados obtenidos dialogan de forma directa con los antecedentes
@@ -1198,6 +1271,24 @@ la protección se vuelve imprescindible. La diferencia radica en la métrica: el
 optimizan fidelidad, este trabajo optimiza tasa de clave efectiva con un costo
 explícito en qubits.
 
+El experimento de control de la Sección~\ref{sec:control} obliga a formular con
+precisión el alcance de la contribución. Para el código de repetición de tres
+qubits, corregir un bit volteado mediante el síndrome y decidir por mayoría son
+operaciones matemáticamente equivalentes: en la base \(Z\), el qubit que discrepa
+es siempre minoría, de modo que ambos caminos conducen a la misma decisión
+(Ecuación~\eqref{eq:control}). La igualdad observada —\(0.0315\) en ambos
+escenarios, con cero correcciones activadas— no es un artefacto del generador
+aleatorio, sino la consecuencia esperada de esa equivalencia. Esto no invalida
+los resultados de las Secciones~3.3.1 a 3.3.3, que describen el comportamiento
+del sistema completo, pero impide atribuir la mejora al síndrome. Por ello, el
+valor de este trabajo no reside en atribuir a la QEC una superioridad «mágica»
+sobre la redundancia clásica, sino en cuantificar el compromiso entre protección
+y \textit{overhead}: la frontera \(n^{*}(p)\) y la tasa \(R_{\text{efectiva}}\)
+son la contribución medible. Una ventaja propia de la corrección cuántica
+requeriría códigos que protejan simultáneamente frente a errores \(X\) y \(Z\)
+—como el código de Steane \citep{steane1996}— y una medición proyectiva del
+síndrome; ambos aspectos se dejan como trabajo futuro.
+
 Desde la perspectiva de la ciberseguridad, los resultados tienen dos
 consecuencias prácticas. La primera es la extensión del rango operativo. Sin
 corrección, el enlace deja de generar clave cuando la probabilidad de error
@@ -1222,12 +1313,46 @@ detectores perfectos y régimen asintótico— y que su traslado a enlaces reale
 requiere la validación experimental que se señala en el apartado de limitaciones.
 
 \section{Conclusiones}
-El presente proyecto demostró que no existe un tamaño de código QEC universal, sino que depende del ruido del canal. Se identificó que para \(p \le 0.10\) no se requiere QEC, mientras que para \(0.12 \le p \le 0.18\) el código \(n=3\) es óptimo, para \(0.20 \le p \le 0.26\) lo es \(n=5\) y a partir de \(p \ge 0.28\) domina \(n=7\).
+
+El presente proyecto demostró que no existe un tamaño de código QEC universal,
+sino que depende del ruido del canal. Se identificó que para \(p \le 0.10\) no se
+requiere QEC, mientras que para \(0.12 \le p \le 0.18\) el código \(n=3\) es
+óptimo, para \(0.20 \le p \le 0.26\) lo es \(n=5\) y a partir de \(p \ge 0.28\)
+domina \(n=7\).
+
+La reducción del QBER debe atribuirse, sin embargo, a su causa precisa. El
+experimento de control con \(n=3\), \(p=0.15\) y 2000 bits lógicos, en el que
+ambos escenarios compartieron semilla, estados ruidosos y extracciones del
+decodificador, produjo un QBER de \(0.0315\) con y sin corrección, los mismos 63
+errores y cero correcciones activadas. Para el código de repetición, la
+corrección por síndrome y la votación por mayoría son operacionalmente
+equivalentes: la mejora proviene de la redundancia estructural del código —tres
+copias y una decisión mayoritaria— y no de un mecanismo cuántico de corrección
+que actúe por separado.
+
+Esta precisión no reduce el valor del resultado; lo sitúa en el terreno correcto.
+La contribución del trabajo es la cuantificación del compromiso entre protección
+y \textit{overhead}: la frontera \(n^{*}(p)\) indica qué tamaño de código
+maximiza la tasa efectiva en cada régimen de ruido, y lo hace con un costo
+explícito en qubits físicos. El hallazgo negativo es también una advertencia
+metodológica: atribuir automáticamente al síndrome toda mejora observada con un
+código de repetición conduce a una conclusión injustificada. Una ventaja genuina
+de la QEC exigiría códigos que corrijan errores \(X\) y \(Z\) —como el de
+Steane— y una medición proyectiva del síndrome; su evaluación queda como trabajo
+futuro.
 
 \section{Limitaciones y recomendaciones}
 \begin{itemize}
-    \item El código de repetición implementado solo corrige errores de bit-flip (X), no errores de fase (Z).
-    \item Trabajo futuro: Evaluar códigos estabilizadores más complejos (Steane, Superficie).
+    \item El código de repetición implementado solo corrige errores de bit-flip
+    (\(X\)), no errores de fase (\(Z\)).
+    \item El experimento de control se limita a \(n=3\) y \(p=0.15\); la
+    equivalencia demostrada no se extiende a códigos que corrijan ambos tipos de
+    error.
+    \item La medición del síndrome implementada calcula valores esperados de los
+    estabilizadores, no una medición proyectiva; los resultados de corrección
+    deben interpretarse dentro de esa aproximación.
+    \item Trabajo futuro: evaluar códigos estabilizadores que corrijan errores
+    \(X\) y \(Z\) (Steane, superficie) con una medición proyectiva del síndrome.
 \end{itemize}
 
 % ------------------------------------------------------------
@@ -1278,7 +1403,7 @@ efectiva. Ambos archivos se ejecutan con Python 3.14 y QuTiP 5.0.
 \label{anexo:articulo}
 
 El artículo que se reproduce a continuación sintetiza los resultados de este
-proyecto en el formato de una comunicación académica de cinco páginas,
+proyecto en el formato de una comunicación académica de seis páginas,
 estructurada conforme al estilo IEEE para congresos. Se incorpora como anexo en
 cumplimiento de la guía de entrega, que exige adjuntar el artículo derivado del
 PIA, y constituye una versión autosuficiente del problema, el método, los
@@ -1288,9 +1413,9 @@ resultados y las conclusiones ya expuestos en los capítulos precedentes.
     \item \textbf{Título:} «Corrección de errores cuánticos y tasa de clave
     segura en BB84 bajo canales ruidosos».
     \item \textbf{Formato:} comunicación de congreso elaborada con la clase
-    \texttt{IEEEtran} (opción \texttt{conference}); cinco páginas.
+    \texttt{IEEEtran} (opción \texttt{conference}); seis páginas.
     \item \textbf{Estructura:} resumen y palabras clave, introducción,
-    antecedentes, método, resultados y conclusiones, con tres figuras y dos
+    antecedentes, método, resultados y conclusiones, con tres figuras y tres
     tablas.
     \item \textbf{Relación con el PIA:} reproduce el problema, el método y los
     resultados de los Capítulos~I a~III, con su propia lista de referencias en
