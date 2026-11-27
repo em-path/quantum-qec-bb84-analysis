@@ -112,7 +112,10 @@ independent per qubit. The effective bit-flip probability is
       exit 0.
 - [x] New table and text fit within the margins (visually checked in the
       rendered PDFs); the table was allowed to float to avoid a large gap.
-- [ ] Commit and push to `origin/main` succeeded.
+- [x] Commit and push to `origin/main` succeeded.
+
+**Publication:** release commit `656e57f`, tag `v1.1.0`, pushed to
+`origin/main` on 2026-11-27.
 
 Compilation commands (from the respective directories):
 
