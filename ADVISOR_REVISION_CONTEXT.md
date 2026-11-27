@@ -101,7 +101,7 @@ independent per qubit. The effective bit-flip probability is
 ### Repository
 
 - `CHANGELOG.md` updated with version 1.1.0.
-- `report/` regenerated (TeX, PDF, and IEEE appendix PDF).
+- `report/` regenerated (report TeX/PDF, and IEEE article source/PDF).
 
 ---
 

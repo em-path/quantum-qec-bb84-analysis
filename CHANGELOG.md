@@ -10,6 +10,11 @@ messages and this changelog are written in English.
 
 ## [Unreleased]
 
+### Added
+
+- IEEE article LaTeX source at `report/articulo_ieee.tex`, so the appendix can
+  be rebuilt from the repository.
+
 ## [1.1.0] - 2026-11-27
 
 ### Added
