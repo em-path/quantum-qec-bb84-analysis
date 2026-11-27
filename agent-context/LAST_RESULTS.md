@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Repository:** <https://github.com/em-path/quantum-qec-bb84-analysis>
-**Release:** `v1.2.0` (publication recorded below after the push)
+**Release:** `v1.2.0` (commit `a71dd7d`)
 **Previous release:** `v1.1.0` (`656e57f`)
 
 This note is the current handoff context. It complements `SESSION_CONTEXT.md`
@@ -105,7 +105,7 @@ caption includes the data source.
 
 ## 5. Git state
 
-- Release commit and tag: recorded after the publication push.
+- Release commit `a71dd7d`, tag `v1.2.0`, pushed to `origin/main` on 2026-11-27.
 - Repository files: `report/reporte-final.tex` and `.pdf`,
   `report/articulo_ieee.tex` and `.pdf`, `control_experiment/`, `agent-context/`,
   `CHANGELOG.md`.

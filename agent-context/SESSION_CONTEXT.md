@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-27
 **Repository:** <https://github.com/em-path/quantum-qec-bb84-analysis>
-**Remote `main`:** `5714aea` (verified 2026-11-27)
+**Remote `main`:** `a71dd7d` (verified 2026-11-27)
 **Local project root:** `C:\Users\neosa\Documents\Maestria_Ciberseguridad_UTM\proyecto-ciber-2026\PIA_QEC_BB84`
 
 **Structure update (2026-11-27):** the control scripts were moved to
@@ -232,8 +232,8 @@ comparison and the per-iteration correction diagnostics.
 ## 8. Git state and workflow
 
 - The local project root **is not a Git repository**.
-- The remote `main` is at **`5714aea`**.
-- Commits pushed in this session:
+- The remote `main` is at **`a71dd7d`**.
+- Commits pushed in the original session:
 
 | Commit | Message |
 |---|---|
@@ -241,6 +241,9 @@ comparison and the per-iteration correction diagnostics.
 | `d3474f8` | Refactor: Translate control experiment script to English |
 | `e38a648` | Feat: Add strict paired control experiment for QEC vs majority voting |
 | `5714aea` | Docs: Add strict paired experiment section to control report |
+
+- Release `v1.2.0` (commit `a71dd7d`, 2026-11-27) moved the control scripts to
+  `control_experiment/`, added `agent-context/`, and updated all references.
 
 - The commits were made from a temporary clone at
   `C:\Users\neosa\AppData\Local\Temp\opencode\qqec-remote-inspect`. This path is
