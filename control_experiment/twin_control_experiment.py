@@ -1,5 +1,5 @@
 """
-prueba_control_gemela.py - Strict paired ("twin") control experiment
+twin_control_experiment.py - Strict paired ("twin") control experiment
 ====================================================================
 
 Question
@@ -44,8 +44,8 @@ Diagnostics (per iteration)
 
 Usage
 -----
-    python prueba_control_gemela.py
-    python prueba_control_gemela.py 5000 0.15 3 2026
+    python control_experiment/twin_control_experiment.py
+    python control_experiment/twin_control_experiment.py 5000 0.15 3 2026
 
 Arguments: iterations, p, n, seed. The script prints only; it does not
 write or modify files.
@@ -55,6 +55,10 @@ from __future__ import annotations
 
 import math
 import sys
+from pathlib import Path
+
+# Make the repository root importable when the script is run from any directory.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 

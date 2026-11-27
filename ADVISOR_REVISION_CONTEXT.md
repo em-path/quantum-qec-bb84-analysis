@@ -38,7 +38,8 @@ management material; the thesis document itself remains in Spanish.
   identical noisy states, and identical decoder random draws (the NumPy RNG
   state is saved and restored). Any difference can only come from correction.
 - **Sources:** `CONTROL_EXPERIMENT.md`, `SESSION_CONTEXT.md`,
-  `prueba_control.py`, `prueba_control_gemela.py`, and
+  `control_experiment/control_experiment.py`,
+  `control_experiment/twin_control_experiment.py`, and
   `data/resultados_finales.csv`.
 
 **Observation:** the current report's "Limitaciones y recomendaciones" section
@@ -102,6 +103,9 @@ independent per qubit. The effective bit-flip probability is
 
 - `CHANGELOG.md` updated with version 1.1.0.
 - `report/` regenerated (report TeX/PDF, and IEEE article source/PDF).
+- Control scripts moved to `control_experiment/` and renamed in English; the
+  Markdown context is mirrored in `agent-context/` (see
+  `agent-context/LAST_RESULTS.md`).
 
 ---
 

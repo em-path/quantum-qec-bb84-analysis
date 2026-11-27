@@ -1,5 +1,5 @@
 """
-prueba_control.py - Control experiment: QEC vs. classical redundancy
+control_experiment.py - Control experiment: QEC vs. classical redundancy
 =====================================================================
 
 Experimental question
@@ -29,8 +29,8 @@ which separates the effect of "repeating the qubit" from that of
 
 Usage
 -----
-    python prueba_control.py                    # n=3, p=0.15, 2000 iterations
-    python prueba_control.py 5000 0.15 3 2026   # iterations, p, n, seed
+    python control_experiment/control_experiment.py                  # defaults
+    python control_experiment/control_experiment.py 5000 0.15 3 2026 # explicit
 
 The script does NOT write or modify files: it only prints to the screen.
 """
@@ -39,6 +39,10 @@ from __future__ import annotations
 
 import math
 import sys
+from pathlib import Path
+
+# Make the repository root importable when the script is run from any directory.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 

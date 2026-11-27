@@ -9,6 +9,17 @@ The project compares repetition codes of different sizes (`n = 1, 3, 5, 7`, wher
 - the **effective secret-key rate** `R_eff = R / n`, which accounts for the cost of the repetition code,
 - the **optimal code size** for each noise level.
 
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| `reproduction_package/` | Self-contained simulation package (English). |
+| `control_experiment/` | Control-experiment scripts and README. |
+| `report/` | LaTeX sources and PDFs of the final report and IEEE article. |
+| `agent-context/` | Markdown context snapshots and the latest findings. |
+| `CONTROL_EXPERIMENT.md` | Full control-experiment report. |
+| `CHANGELOG.md` | Release history (English). |
+
 ## Project structure
 
 ```
@@ -29,6 +40,25 @@ reproduction_package/
 ├── .gitignore
 └── README.md
 ```
+
+## Control experiment
+
+The `control_experiment/` folder contains two standalone scripts:
+
+- `control_experiment.py` — independent-seed comparison of QEC vs. redundancy.
+- `twin_control_experiment.py` — strict paired comparison with shared seed,
+  state, and decoder draws.
+
+Run them from the repository root:
+
+```bash
+python control_experiment/control_experiment.py 2000 0.15 3 2026
+python control_experiment/twin_control_experiment.py 2000 0.15 3 2026
+```
+
+For `n = 3`, `p = 0.15`, and `N = 2000`, both scenarios give QBER `0.0315` with
+zero syndrome-triggered corrections. See
+[`CONTROL_EXPERIMENT.md`](CONTROL_EXPERIMENT.md) for the full analysis.
 
 ## Requirements
 

@@ -10,10 +10,30 @@ messages and this changelog are written in English.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-27
+
 ### Added
 
+- `control_experiment/` folder with English-named scripts and a README.
+- `agent-context/` folder with all Markdown context and `LAST_RESULTS.md`.
 - IEEE article LaTeX source at `report/articulo_ieee.tex`, so the appendix can
   be rebuilt from the repository.
+
+### Changed
+
+- Renamed `prueba_control.py` to `control_experiment/control_experiment.py` and
+  `prueba_control_gemela.py` to
+  `control_experiment/twin_control_experiment.py`; both scripts now add the
+  repository root to `sys.path` and can be run from any directory.
+- Updated `CONTROL_EXPERIMENT.md`, `SESSION_CONTEXT.md`,
+  `ADVISOR_REVISION_CONTEXT.md`, `README.md`, and the report/IEEE links to the
+  new paths.
+- Regenerated `report/reporte-final.pdf` (56 pages) and
+  `report/articulo_ieee.pdf` (6 pages).
+
+### Removed
+
+- The old Spanish-named control scripts from the repository root.
 
 ## [1.1.0] - 2026-11-27
 
@@ -57,6 +77,7 @@ messages and this changelog are written in English.
   the repository layout. The referenced files are byte-identical to the originals
   in `reproduction_package/src/`.
 
-[Unreleased]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/em-path/quantum-qec-bb84-analysis/releases/tag/v1.0.0

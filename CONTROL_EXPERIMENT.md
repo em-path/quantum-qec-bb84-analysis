@@ -1,7 +1,8 @@
 # Control Experiment: Quantum Error Correction vs. Classical Redundancy
 
 **Repository:** `em-path/quantum-qec-bb84-analysis`
-**Scripts:** `prueba_control.py`, `prueba_control_gemela.py`
+**Scripts:** `control_experiment/control_experiment.py`,
+`control_experiment/twin_control_experiment.py`
 **Date:** 2026-11-26
 **Subject:** 3-qubit repetition code under a depolarizing channel
 
@@ -119,8 +120,8 @@ majority vote over three redundant qubits.
 The comparison in Section 3.1 used independent seeds for A and B (2026 and 2027).
 To rule out the possibility that the similarity of the two QBER values was masked
 by different random streams, a stricter paired experiment was run with
-`prueba_control_gemela.py`. In this design, both scenarios share, iteration by
-iteration:
+`control_experiment/twin_control_experiment.py`. In this design, both scenarios
+share, iteration by iteration:
 
 1. the same logical bit,
 2. the same encoded state,
@@ -243,8 +244,8 @@ A genuine QEC advantage would require both:
 Run from the repository root:
 
 ```bash
-python prueba_control.py 2000 0.15 3 2026
-python prueba_control_gemela.py 2000 0.15 3 2026
+python control_experiment/control_experiment.py 2000 0.15 3 2026
+python control_experiment/twin_control_experiment.py 2000 0.15 3 2026
 ```
 
 The arguments are, in order: iterations, noise level `p`, code size `n`, and
