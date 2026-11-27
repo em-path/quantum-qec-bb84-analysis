@@ -13,17 +13,21 @@ The project compares repetition codes of different sizes (`n = 1, 3, 5, 7`, wher
 
 | Path | Contents |
 |---|---|
-| `reproduction_package/` | Self-contained simulation package (English). |
+| `src/` | Simulation modules: channel, BB84, QEC, and the integrated pipeline. |
+| `scripts/` | Parameter sweep and figure-generation scripts. |
+| `data/` | CSV results (`final_results.csv`, `optimal_n.csv`). |
+| `figs/` | Generated figures (PNG, 300 DPI). |
 | `control_experiment/` | Control-experiment scripts and README. |
 | `report/` | LaTeX sources and PDFs of the final report and IEEE article. |
-| `agent-context/` | Markdown context snapshots and the latest findings. |
 | `CONTROL_EXPERIMENT.md` | Full control-experiment report. |
+| `ADVISOR_REVISION_CONTEXT.md` | Advisor feedback, findings, and revision record. |
 | `CHANGELOG.md` | Release history (English). |
+| `requirements.txt` | Python dependencies. |
 
 ## Project structure
 
 ```
-reproduction_package/
+.
 ├── src/
 │   ├── channel.py       # Depolarizing channel model
 │   ├── bb84.py          # BB84 without QEC
@@ -36,6 +40,18 @@ reproduction_package/
 │   ├── final_results.csv    # Sweep results for (p, n)
 │   └── optimal_n.csv        # Optimal code size per noise level
 ├── figs/                    # Generated figures (PNG, 300 DPI)
+├── control_experiment/
+│   ├── control_experiment.py
+│   ├── twin_control_experiment.py
+│   └── README.md
+├── report/
+│   ├── reporte-final.tex
+│   ├── reporte-final.pdf
+│   ├── articulo_ieee.tex
+│   └── articulo_ieee.pdf
+├── CONTROL_EXPERIMENT.md
+├── ADVISOR_REVISION_CONTEXT.md
+├── CHANGELOG.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -60,6 +76,13 @@ For `n = 3`, `p = 0.15`, and `N = 2000`, both scenarios give QBER `0.0315` with
 zero syndrome-triggered corrections. See
 [`CONTROL_EXPERIMENT.md`](CONTROL_EXPERIMENT.md) for the full analysis.
 
+## Report and article
+
+`report/` contains the Spanish final report (`reporte-final.tex` and its
+compiled PDF) and the IEEE-format article (`articulo_ieee.tex` and its compiled
+PDF). The report includes the control experiment in Section 3.3.4 and the
+corresponding appendix.
+
 ## Requirements
 
 - Python 3.10 or newer (tested with Python 3.14)
@@ -67,7 +90,7 @@ zero syndrome-triggered corrections. See
 
 ## Installation
 
-From the root of `reproduction_package/`, create a virtual environment (recommended) and install the dependencies:
+From the repository root, create a virtual environment (recommended) and install the dependencies:
 
 ```bash
 python -m venv .venv
@@ -81,7 +104,7 @@ pip install -r requirements.txt
 
 ## Running the simulation
 
-Run all commands from the root of `reproduction_package/` so that the relative data paths resolve correctly.
+Run all commands from the repository root so that the relative data paths resolve correctly.
 
 The full sweep uses `N = 10000` logical bits per `(p, n)` combination and can take **20 to 40 minutes**:
 
@@ -141,7 +164,7 @@ python -m src.qec
 
 - The simulation uses NumPy's global random number generator. Set `np.random.seed(<value>)` before a run to make results reproducible.
 - Figures are saved at 300 DPI in an academic style suitable for publication.
-- All paths are relative to the package root; run scripts from `reproduction_package/`.
+- All paths are relative to the repository root; run scripts from there.
 
 ## References
 

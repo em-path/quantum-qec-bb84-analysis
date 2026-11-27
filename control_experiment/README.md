@@ -51,4 +51,5 @@ The scripts import the English package (`encode`, `measure_syndrome`, `correct`,
 - Full experiment report: [`../CONTROL_EXPERIMENT.md`](../CONTROL_EXPERIMENT.md)
 - Thesis section: `../documento-final/reporte-final.tex` (local) or
   `../report/reporte-final.tex` (repository), Section 3.3.4
-- Latest context snapshot: [`../agent-context/LAST_RESULTS.md`](../agent-context/LAST_RESULTS.md)
+- Context snapshot: `agent-context/LAST_RESULTS.md` (local working environment
+  only; not part of this repository).

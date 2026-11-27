@@ -104,9 +104,9 @@ independent per qubit. The effective bit-flip probability is
 
 - `CHANGELOG.md` updated with version 1.1.0.
 - `report/` regenerated (report TeX/PDF, and IEEE article source/PDF).
-- Control scripts moved to `control_experiment/` and renamed in English; the
-  Markdown context is mirrored in `agent-context/` (see
-  `agent-context/LAST_RESULTS.md`).
+- Control scripts moved to `control_experiment/` and renamed in English. Context
+  snapshots are kept locally in `agent-context/` and are not part of this
+  repository.
 
 ---
 

@@ -10,6 +10,19 @@ messages and this changelog are written in English.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-27
+
+### Removed
+
+- `agent-context/` from the public repository. The folder is maintained only in
+  the local working environment.
+
+### Changed
+
+- Repository README, report Appendix A.2, `ADVISOR_REVISION_CONTEXT.md`, and
+  `control_experiment/README.md` no longer reference a repository-hosted
+  `agent-context/`.
+
 ## [1.2.0] - 2026-11-27
 
 ### Added
@@ -77,7 +90,8 @@ messages and this changelog are written in English.
   the repository layout. The referenced files are byte-identical to the originals
   in `reproduction_package/src/`.
 
-[Unreleased]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/em-path/quantum-qec-bb84-analysis/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/em-path/quantum-qec-bb84-analysis/releases/tag/v1.0.0
