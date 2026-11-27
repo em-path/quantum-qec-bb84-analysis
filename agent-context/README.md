@@ -21,6 +21,13 @@ Snapshot date: **2026-11-27**.
 | `REPRODUCTION_PACKAGE_README.md` | `../reproduction_package/README.md` | Simulation package documentation. |
 | `LAST_RESULTS.md` | this folder | Latest results, structure, and publication state. |
 
+**Path note:** `AGENTS.md` and `SESSION_CONTEXT.md` are local-project files; the
+repository keeps their snapshots here. `LOCAL_PROJECT_README.md` is the Spanish
+local overview, while the repository's public README is the English package
+documentation. The report lives in `documento-final/` locally and in `report/`
+in the repository; the reproduction package lives in `reproduction_package/`
+locally and at the repository root.
+
 ## Start here
 
 For the current state of the project, read [`LAST_RESULTS.md`](LAST_RESULTS.md).

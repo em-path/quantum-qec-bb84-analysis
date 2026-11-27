@@ -3,7 +3,8 @@
 **Date:** 2026-11-27
 **Repository:** <https://github.com/em-path/quantum-qec-bb84-analysis>
 **Baseline:** remote `main` at `0cecfa8`; report 52 pages; IEEE article 5 pages.
-**Scope:** `documento-final/reporte-final.tex`, `documento-final/articulo_ieee.tex`.
+**Scope:** `documento-final/reporte-final.tex` and
+`documento-final/articulo_ieee.tex` (local); repository copies under `report/`.
 
 This note tracks the context, the empirical findings, and the edits applied after
 the advisor's review. It is written in English because it is repository

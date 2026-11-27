@@ -126,8 +126,10 @@ caption includes the data source.
 
 ## 7. Canonical documents
 
-- Report: `../documento-final/reporte-final.tex`
-- IEEE article: `../documento-final/articulo_ieee.tex`
+- Report: `../documento-final/reporte-final.tex` (local) or
+  `../report/reporte-final.tex` (repository)
+- IEEE article: `../documento-final/articulo_ieee.tex` (local) or
+  `../report/articulo_ieee.tex` (repository)
 - Control experiment: `../CONTROL_EXPERIMENT.md`
 - Scripts: `../control_experiment/`
 - Changelog: `../CHANGELOG.md`
